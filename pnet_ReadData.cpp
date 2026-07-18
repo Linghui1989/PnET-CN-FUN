@@ -317,7 +317,7 @@ void pnet_model::WriteoutYr_netcdf(clim_struct* clim, out_struct* out, char* fil
 		"prec,     evap,  trans,   et,   drain, wtrstress, soilwater, "
 		"plantc,   budc,    woodc,     rootc,    "
 		"ndep, plantnYr, budn, ndrain, netnmin, netnitrif, nratio, foln, "
-		"litm,    litn,    rmresp,   rgresp, decresp, decwresp,"
+		"litm,    litn,    rmresp,   rgresp, decresp, totalsoilresp, decwresp,"
 		"N2O,     NO,      N2,  N2Ode,  NOde,"   // ngas
 		"v1, v2,v3"
 		"\n");
@@ -394,8 +394,18 @@ void pnet_model::WriteoutYr(clim_struct* clim, out_struct* out)
 		"nppfol,  nppwood,  npproot,  psn,  nep,  gpp,  "
 		"prec,	evap,  trans,   et,   drain, wtrstress, "
 		"plantc,   budc,    woodc,     rootc,   "
-		"ndep, plantnYr, budn, ndrain, netnmin, netnitrif, nratio, foln,  "
-		"litm,    litn,    rmresp,   rgresp, decresp, decwresp, "
+		"ndep, plantnYr, budn, ndrain, netnmin, grossnmin, grossnimob, nplantuptake, bgnetnmin, "
+		"orggrossnmin, rhizgrossnmin, bulkgrossnmin, mineralgrossnmin, "
+		"orgnetnmin_layer, rhiznetnmin_layer, bulknetnmin_layer, mineralnetnmin_layer, "
+		"rootexudatec, mycNtoPlant, fun_fixn, fun_ndemand, fun_ndemandgap, fun_potrootc, fun_potwoodc, fun_nlimit_rootc, fun_nlimit_woodc, fun_plantn_overflow, fun_overflow_to_nh4, fun_overflow_to_no3, netnitrif, nratio, foln,  "
+		"nstart_total, nend_total, dn_total, nstart_soilorg, nend_soilorg, dn_soilorg, "
+		"nstart_mineral, nend_mineral, dn_mineral, nstart_plantstore, nend_plantstore, dn_plantstore, "
+		"nstart_vegstruct, nend_vegstruct, dn_vegstruct, nstart_deadwood, nend_deadwood, dn_deadwood, ngas, nbalance_resid, "
+		"litm,    litn,    rmresp,   rgresp, decresp, totalsoilresp, decwresp, "
+		"orgfastc, orgfastn, orgslowc, orgslown, orgdeadc, orgdeadn, "
+		"rhizfastc, rhizfastn, rhizslowc, rhizslown, rhizdeadc, rhizdeadn, "
+		"bulkfastc, bulkfastn, bulkslowc, bulkslown, bulkdeadc, bulkdeadn, "
+		"orgmicn, rhizmicn, bulkmicn, totalmicn, orgprotn, rhizprotn, bulkprotn, totalprotn, protectionnyr, deprotectionnyr, "
 		"N2O,  NO,  N2,  TotalN,  FolNRetrans,  "   // ngas
 		"v1,  v2,  v3"
 		"\n");
@@ -403,8 +413,18 @@ void pnet_model::WriteoutYr(clim_struct* clim, out_struct* out)
 		"g/m2,   g/m2,    g/m2,     gC/m2,   gC/m2,   gC/m2,   "
 		"cm,    cm,     cm,    cm,      cm,         ,    "
 		"gC/m2,  gC/m2,   gC/m2,     gC/m2,    "
-		"gN/m2, gN/m2,  gN/m2, gN/m2,   gN/m2,   gN/m2,       ,   %%,   "
-		"gC/m2,   gN/m2,   gC/m2,    gC/m2,   gC/m2, gC/m2, "
+		"gN/m2, gN/m2,  gN/m2, gN/m2,   gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gC/m2, gN/m2, gN/m2, gN/m2, gN/m2, gC/m2, gC/m2, gC/m2, gC/m2, gN/m2, gN/m2, gN/m2, gN/m2,       ,   %%,   "
+		"gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, "
+		"gC/m2,   gN/m2,   gC/m2,    gC/m2,   gC/m2, gC/m2, gC/m2, "
+		"gC/m2, gN/m2, gC/m2, gN/m2, gC/m2, gN/m2, "
+		"gC/m2, gN/m2, gC/m2, gN/m2, gC/m2, gN/m2, "
+		"gC/m2, gN/m2, gC/m2, gN/m2, gC/m2, gN/m2, "
+		"gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, gN/m2, "
 		"mgN/m2, mgN/m2, mgN/m2,  mgN/m2, ,"
 		"v1,v2,v3"
 		"\n");
@@ -428,9 +448,37 @@ void pnet_model::WriteoutYr(clim_struct* clim, out_struct* out)
 
 		fprintf(fileoutY, "%6.2f, %6.2f, %6.2f, %6.2f, %6.2f, ", out->ndep[i], out->plantnYr[i], out->budn[i], out->ndrain[i], out->netnmin[i]);// N cycle
 
-		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, ", out->netnitrif[i], out->nratio[i], out->foln[i]);// N cycle
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->grossnmin[i], out->grossnimob[i], out->nplantuptake[i], out->bgnetnmin[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->orggrossnmin[i], out->rhizgrossnmin[i], out->bulkgrossnmin[i], out->mineralgrossnmin[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->orgnetnmin_layer[i], out->rhiznetnmin_layer[i], out->bulknetnmin_layer[i], out->mineralnetnmin_layer[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->rootexudatec[i], out->mycnplant[i], out->funfixn[i], out->funndemand[i], out->funndemandgap[i],
+			out->funpotrootc[i], out->funpotwoodc[i], out->funnlimitrootc[i], out->funnlimitwoodc[i],
+			out->funplantnoverflow[i], out->funoverflowtonh4[i], out->funoverflowtono3[i],
+			out->netnitrif[i], out->nratio[i]);// N cycle diagnostics
+		fprintf(fileoutY, "%7.2f, ", out->foln[i]);// N cycle
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->nstart_total[i], out->nend_total[i], out->dn_total[i],
+			out->nstart_soilorg[i], out->nend_soilorg[i], out->dn_soilorg[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->nstart_mineral[i], out->nend_mineral[i], out->dn_mineral[i],
+			out->nstart_plantstore[i], out->nend_plantstore[i], out->dn_plantstore[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->nstart_vegstruct[i], out->nend_vegstruct[i], out->dn_vegstruct[i],
+			out->nstart_deadwood[i], out->nend_deadwood[i], out->dn_deadwood[i],
+			out->ngas[i], out->nbalance_resid[i]);
 
-		fprintf(fileoutY, "%7.1f, %7.1f, %7.1f, %7.1f, %7.1f,%7.1f,", out->litm[i], out->litn[i], out->rmresp[i], out->rgresp[i], out->decresp[i], out->decwresp[i]);// Linghui 0729
+		fprintf(fileoutY, "%7.1f, %7.1f, %7.1f, %7.1f, %7.1f, %7.1f,%7.1f,", out->litm[i], out->litn[i], out->rmresp[i], out->rgresp[i], out->decresp[i], out->totalsoilresp[i], out->decwresp[i]);// Linghui 0729
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ", out->orgfastc[i], out->orgfastn[i], out->orgslowc[i], out->orgslown[i], out->orgdeadc[i], out->orgdeadn[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ", out->rhizfastc[i], out->rhizfastn[i], out->rhizslowc[i], out->rhizslown[i], out->rhizdeadc[i], out->rhizdeadn[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ", out->bulkfastc[i], out->bulkfastn[i], out->bulkslowc[i], out->bulkslown[i], out->bulkdeadc[i], out->bulkdeadn[i]);
+		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, %7.2f, ",
+			out->orgmicn[i], out->rhizmicn[i], out->bulkmicn[i], out->totalmicn[i],
+			out->orgprotn[i], out->rhizprotn[i], out->bulkprotn[i], out->totalprotn[i],
+			out->protectionnyr[i], out->deprotectionnyr[i]);
 
 		fprintf(fileoutY, "%7.2f, %7.2f, %7.2f,", out->fn2o[i] * 1000, out->fno[i] * 1000, out->fn2[i] * 1000);   // N Gas
 		fprintf(fileoutY, "%7.2f, %7.2f,", out->fn2ode[i], out->fnode[i]);   // N Gas

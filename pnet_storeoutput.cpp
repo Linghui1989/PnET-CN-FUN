@@ -68,6 +68,18 @@ void pnet_model::storeoutput(veg_struct* veg, share_struct* share, out_struct* o
 		out->grossnmin[*ystep] = share->GrossNMinYr;
 		out->nplantuptake[*ystep] = share->PlantNUptakeYr;
 		out->grossnimob[*ystep] = share->GrossNImmobYr;
+		out->bgnetnmin[*ystep] = share->BGNetNMineralizationYr;
+		out->orggrossnmin[*ystep] = share->BGOrgGrossNMineralizationYr;
+		out->rhizgrossnmin[*ystep] = share->BGRhizGrossNMineralizationYr;
+		out->bulkgrossnmin[*ystep] = share->BGBulkGrossNMineralizationYr;
+		out->mineralgrossnmin[*ystep] = share->BGRhizGrossNMineralizationYr + share->BGBulkGrossNMineralizationYr;
+		out->orgnetnmin_layer[*ystep] = share->BGOrgNetNMineralizationYr;
+		out->rhiznetnmin_layer[*ystep] = share->BGRhizNetNMineralizationYr;
+		out->bulknetnmin_layer[*ystep] = share->BGBulkNetNMineralizationYr;
+		out->mineralnetnmin_layer[*ystep] = share->BGRhizNetNMineralizationYr + share->BGBulkNetNMineralizationYr;
+		out->rootexudatec[*ystep] = share->RootExudateCYr;
+		out->mycnplant[*ystep] = share->MycorrhizalNToPlantYr;
+		out->funfixn[*ystep] = share->FUNFixNYr;
 		out->littern[*ystep] = share->TotalLitterNYr;
 		out->netnitrif[*ystep] = share->NetNitrYr;
 		out->nratio[*ystep] = share->NRatio;
@@ -79,7 +91,74 @@ void pnet_model::storeoutput(veg_struct* veg, share_struct* share, out_struct* o
 		out->rmresp[*ystep] = share->RootMRespYr;
 		out->rgresp[*ystep] = share->RootGRespYr;
 		out->decresp[*ystep] = share->SoilDecRespYr;
+		out->totalsoilresp[*ystep] = share->RootMRespYr + share->SoilDecRespYr;
 		out->decwresp[*ystep] = share->WoodDecRespYr;  //Linghui 0729
+		out->orgfastc[*ystep] = share->funBG.organicLayer.unprotC[BG_FAST] + share->funBG.organicLayer.protC[BG_FAST];
+		out->orgfastn[*ystep] = share->funBG.organicLayer.unprotN[BG_FAST] + share->funBG.organicLayer.protN[BG_FAST];
+		out->orgslowc[*ystep] = share->funBG.organicLayer.unprotC[BG_SLOW] + share->funBG.organicLayer.protC[BG_SLOW];
+		out->orgslown[*ystep] = share->funBG.organicLayer.unprotN[BG_SLOW] + share->funBG.organicLayer.protN[BG_SLOW];
+		out->orgdeadc[*ystep] = share->funBG.organicLayer.unprotC[BG_DEADMIC] + share->funBG.organicLayer.protC[BG_DEADMIC];
+		out->orgdeadn[*ystep] = share->funBG.organicLayer.unprotN[BG_DEADMIC] + share->funBG.organicLayer.protN[BG_DEADMIC];
+		out->rhizfastc[*ystep] = share->funBG.mineralRhizosphere.unprotC[BG_FAST] + share->funBG.mineralRhizosphere.protC[BG_FAST];
+		out->rhizfastn[*ystep] = share->funBG.mineralRhizosphere.unprotN[BG_FAST] + share->funBG.mineralRhizosphere.protN[BG_FAST];
+		out->rhizslowc[*ystep] = share->funBG.mineralRhizosphere.unprotC[BG_SLOW] + share->funBG.mineralRhizosphere.protC[BG_SLOW];
+		out->rhizslown[*ystep] = share->funBG.mineralRhizosphere.unprotN[BG_SLOW] + share->funBG.mineralRhizosphere.protN[BG_SLOW];
+		out->rhizdeadc[*ystep] = share->funBG.mineralRhizosphere.unprotC[BG_DEADMIC] + share->funBG.mineralRhizosphere.protC[BG_DEADMIC];
+		out->rhizdeadn[*ystep] = share->funBG.mineralRhizosphere.unprotN[BG_DEADMIC] + share->funBG.mineralRhizosphere.protN[BG_DEADMIC];
+		out->bulkfastc[*ystep] = share->funBG.mineralBulk.unprotC[BG_FAST] + share->funBG.mineralBulk.protC[BG_FAST];
+		out->bulkfastn[*ystep] = share->funBG.mineralBulk.unprotN[BG_FAST] + share->funBG.mineralBulk.protN[BG_FAST];
+		out->bulkslowc[*ystep] = share->funBG.mineralBulk.unprotC[BG_SLOW] + share->funBG.mineralBulk.protC[BG_SLOW];
+		out->bulkslown[*ystep] = share->funBG.mineralBulk.unprotN[BG_SLOW] + share->funBG.mineralBulk.protN[BG_SLOW];
+		out->bulkdeadc[*ystep] = share->funBG.mineralBulk.unprotC[BG_DEADMIC] + share->funBG.mineralBulk.protC[BG_DEADMIC];
+		out->bulkdeadn[*ystep] = share->funBG.mineralBulk.unprotN[BG_DEADMIC] + share->funBG.mineralBulk.protN[BG_DEADMIC];
+		out->orgmicn[*ystep] = share->funBG.organicLayer.livingMicrobeN;
+		out->rhizmicn[*ystep] = share->funBG.mineralRhizosphere.livingMicrobeN;
+		out->bulkmicn[*ystep] = share->funBG.mineralBulk.livingMicrobeN;
+		out->totalmicn[*ystep] = share->funBG.organicLayer.livingMicrobeN
+			+ share->funBG.mineralRhizosphere.livingMicrobeN
+			+ share->funBG.mineralBulk.livingMicrobeN;
+		out->orgprotn[*ystep] = share->funBG.organicLayer.protN[BG_FAST]
+			+ share->funBG.organicLayer.protN[BG_SLOW]
+			+ share->funBG.organicLayer.protN[BG_DEADMIC];
+		out->rhizprotn[*ystep] = share->funBG.mineralRhizosphere.protN[BG_FAST]
+			+ share->funBG.mineralRhizosphere.protN[BG_SLOW]
+			+ share->funBG.mineralRhizosphere.protN[BG_DEADMIC];
+		out->bulkprotn[*ystep] = share->funBG.mineralBulk.protN[BG_FAST]
+			+ share->funBG.mineralBulk.protN[BG_SLOW]
+			+ share->funBG.mineralBulk.protN[BG_DEADMIC];
+		out->totalprotn[*ystep] = out->orgprotn[*ystep] + out->rhizprotn[*ystep] + out->bulkprotn[*ystep];
+		out->protectionnyr[*ystep] = share->BGProtectionNYr;
+		out->deprotectionnyr[*ystep] = share->BGDeprotectionNYr;
+		out->funndemand[*ystep] = share->FUNNdemandYr;
+		out->funndemandgap[*ystep] = share->FUNNdemandGapYr;
+		out->funpotrootc[*ystep] = share->FUNPotentialRootProdCYr;
+		out->funpotwoodc[*ystep] = share->FUNPotentialWoodProdCYr;
+		out->funnlimitrootc[*ystep] = share->FUNNLimitRootProdCYr;
+		out->funnlimitwoodc[*ystep] = share->FUNNLimitWoodProdCYr;
+		out->funplantnoverflow[*ystep] = share->FUNPlantNOverflowYr;
+		out->funoverflowtonh4[*ystep] = share->FUNOverflowToNH4Yr;
+		out->funoverflowtono3[*ystep] = share->FUNOverflowToNO3Yr;
+		out->nstart_total[*ystep] = share->AnnualStartTotalN;
+		out->nend_total[*ystep] = share->TotalN;
+		out->dn_total[*ystep] = out->nend_total[*ystep] - out->nstart_total[*ystep];
+		out->nstart_soilorg[*ystep] = share->AnnualStartSoilOrgN;
+		out->nend_soilorg[*ystep] = share->HON;
+		out->dn_soilorg[*ystep] = out->nend_soilorg[*ystep] - out->nstart_soilorg[*ystep];
+		out->nstart_mineral[*ystep] = share->AnnualStartMineralN;
+		out->nend_mineral[*ystep] = share->NH4 + share->NO3;
+		out->dn_mineral[*ystep] = out->nend_mineral[*ystep] - out->nstart_mineral[*ystep];
+		out->nstart_plantstore[*ystep] = share->AnnualStartPlantStoreN;
+		out->nend_plantstore[*ystep] = share->PlantN + share->BudN;
+		out->dn_plantstore[*ystep] = out->nend_plantstore[*ystep] - out->nstart_plantstore[*ystep];
+		out->nstart_vegstruct[*ystep] = share->AnnualStartVegStructN;
+		out->nend_vegstruct[*ystep] = share->FolN + share->WoodMassN + share->RootMassN;
+		out->dn_vegstruct[*ystep] = out->nend_vegstruct[*ystep] - out->nstart_vegstruct[*ystep];
+		out->nstart_deadwood[*ystep] = share->AnnualStartDeadWoodN;
+		out->nend_deadwood[*ystep] = share->DeadWoodN;
+		out->dn_deadwood[*ystep] = out->nend_deadwood[*ystep] - out->nstart_deadwood[*ystep];
+		out->ngas[*ystep] = share->FluxN2OYr + share->FluxNOYr + share->FluxN2Yr;
+		out->nbalance_resid[*ystep] = out->dn_total[*ystep]
+			- (share->NdepTot - share->NDrainYr - out->ngas[*ystep]);
 
 
 		out->fn2o[*ystep] = share->FluxN2OYr;

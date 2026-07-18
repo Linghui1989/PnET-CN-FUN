@@ -67,5 +67,45 @@ void pnet_model::YearInit(share_struct* share)
 	share->TotO3Dose=0;
 
 	share->CDDTot = 0;
+	share->RootExudateCYr = 0;
+	share->MycorrhizalCYr = 0;
+	share->MycorrhizalNToPlantYr = 0;
+	share->FUNFixNYr = 0;
+	share->BGGrossNMobilizationYr = 0;
+	share->BGGrossNImmobilizationYr = 0;
+	share->BGNetNMineralizationYr = 0;
+	share->BGOrgGrossNMineralizationYr = 0;
+	share->BGRhizGrossNMineralizationYr = 0;
+	share->BGBulkGrossNMineralizationYr = 0;
+	share->BGOrgGrossNImmobilizationYr = 0;
+	share->BGRhizGrossNImmobilizationYr = 0;
+	share->BGBulkGrossNImmobilizationYr = 0;
+	share->BGOrgNetNMineralizationYr = 0;
+	share->BGRhizNetNMineralizationYr = 0;
+	share->BGBulkNetNMineralizationYr = 0;
+	share->BGMicrobialTurnoverNYr = 0;
+	share->BGProtectionNYr = 0;
+	share->BGDeprotectionNYr = 0;
+	share->PlantNUptakeLast = 0;
+	share->FUNPotentialRootProdC = 0;
+	share->FUNPotentialWoodProdC = 0;
+	share->FUNNdemandYr = 0;
+	share->FUNNdemandGapYr = 0;
+	share->FUNPotentialRootProdCYr = 0;
+	share->FUNPotentialWoodProdCYr = 0;
+	share->FUNNLimitRootProdCYr = 0;
+	share->FUNNLimitWoodProdCYr = 0;
+	share->FUNPlantNOverflowYr = 0;
+	share->FUNOverflowToNH4Yr = 0;
+	share->FUNOverflowToNO3Yr = 0;
+
+	share->FolN = share->FolMass * share->FolNCon / 100.0;
+	share->AnnualStartSoilOrgN = share->HON;
+	share->AnnualStartMineralN = share->NH4 + share->NO3;
+	share->AnnualStartPlantStoreN = share->PlantN + share->BudN;
+	share->AnnualStartVegStructN = share->FolN + share->WoodMassN + share->RootMassN;
+	share->AnnualStartDeadWoodN = share->DeadWoodN;
+	share->AnnualStartTotalN = share->AnnualStartSoilOrgN + share->AnnualStartMineralN
+		+ share->AnnualStartPlantStoreN + share->AnnualStartVegStructN + share->AnnualStartDeadWoodN;
 
 }

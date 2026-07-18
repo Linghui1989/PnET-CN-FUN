@@ -1,0 +1,88 @@
+FUN-CORPSE Phase 1 parameters
+value followed by an inline note
+2.6       vmaxref fast
+1.15      vmaxref slow
+1.0       vmaxref dead microbial
+37000.0   Ea fast
+54000.0   Ea slow
+50000.0   Ea dead microbial
+0.01      kC fast
+0.01      kC slow
+0.01      kC dead microbial
+0.6       eup fast
+0.1       eup slow
+0.6       eup dead microbial
+0.1       nup fast
+0.1       nup slow
+0.1       nup dead microbial
+1.0       max immobilization rate
+2.5       gas diffusion exponent
+0.0005    min microbial C fraction
+0.25      microbial turnover time years
+0.6       turnover efficiency et
+10.0      default microbial CN
+100.0     protected turnover years
+0.6       protection rate fast
+0.0       protection rate slow
+4.0       protection rate dead microbial
+0.5       turnover fraction to mineral N
+0.1       turnover fraction to slow pool
+0.5       leaf fast fraction
+0.5       leaf slow fraction
+0.5       root fast fraction
+0.5       root slow fraction
+0.1       deadwood fast fraction
+0.9       deadwood slow fraction
+0.5       initial protected fraction
+0.1887    initial organic fraction
+0.0       initial mineral rhizosphere fraction
+0.00006   litter transfer to soil
+0.2       rhizosphere fraction
+0         root inputs only to rhizosphere flag
+1.0       exudate share of additional N acquisition C
+1.0       mycorrhizal share of additional N acquisition C
+0.05      maximum additional N acquisition C fraction of GPP
+0.05      half saturation of plant N deficit
+30.0      exudate CN
+0.05      vmax mycorrhizal N uptake
+0.5       half saturation mycorrhizal C
+0.05      half saturation mycorrhizal N
+1.0       transfer efficiency mycorrhizal N to plant
+8.0       minimum microbial CN
+20.0      maximum microbial CN
+0.05      half saturation available N for microbial CN
+1         use dynamic microbial CN flag
+1         enable root exudation flag
+1         enable mycorrhizal uptake flag
+0.0001027397 mycorrhizal cost N coefficient
+1164.3835616 mycorrhizal cost C coefficient
+0.0016438356 non-mycorrhizal cost N coefficient
+54.7945205 non-mycorrhizal cost C coefficient
+0.002      storage acquisition cost
+0.0       litter fungal production fraction to litter layer
+300.0     global decomposition scalar
+0.6       decomposition scalar organic horizon
+0.9       decomposition scalar rhizosphere horizon
+0.7       decomposition scalar bulk horizon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

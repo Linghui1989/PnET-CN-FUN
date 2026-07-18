@@ -39,8 +39,11 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 			{
 				BiomLossFrac = site->distintensity[i];  // mortality
 				RemoveFrac = site->distremove[i];    // remove out of field
-				share->HOM = share->HOM * (1 - site->distsoilloss[i]);
-				share->HON = share->HON * (1 - site->distsoilloss[i]);
+				if (modeltype != 4)
+				{
+					share->HOM = share->HOM * (1 - site->distsoilloss[i]);
+					share->HON = share->HON * (1 - site->distsoilloss[i]);
+				}
 				break;
 			}
 		}
@@ -69,6 +72,10 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 	//	share->PlantN = share->PlantN + RootLitN * (share->NRatio-1); //Linghui Meng 20210124
 	/*
 		if (share->PlantN > veg->MaxNStore) {
+			if (modeltype == 4)
+			{
+				share->FUNOverflowToNO3Yr += (share->PlantN - veg->MaxNStore);
+			}
 			share->NO3 = share->NO3 + (share->PlantN - veg->MaxNStore);
 			share->PlantN = veg->MaxNStore;
 		}
@@ -76,6 +83,8 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 	share->RootMass = share->RootMass - RootLitM;
 	//	share->RootMassN = share->RootMassN - RootLitN * share->NRatio;
 	share->RootMassN = share->RootMassN - RootLitN;
+	share->RootLitM = RootLitM;
+	share->RootLitN = RootLitN;
 
 	if (BiomLossFrac > 0)
 	{
@@ -99,6 +108,10 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 		share->WoodMassN = share->WoodMassN - WoodLitN;
 		/*
 				if (share->PlantN > veg->MaxNStore) {
+					if (modeltype == 4)
+					{
+						share->FUNOverflowToNO3Yr += (share->PlantN - veg->MaxNStore);
+					}
 					share->NO3 = share->NO3 + (share->PlantN - veg->MaxNStore);
 					share->PlantN = veg->MaxNStore;
 				}
@@ -119,6 +132,8 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 	share->DeadWoodM = share->DeadWoodM - WoodMassLoss;
 	//	share->DeadWoodN = share->DeadWoodN - WoodMassLoss*veg->WLPctN; //Linghui MENG 20210124
 	share->DeadWoodN = share->DeadWoodN - WoodTransN;
+	share->WoodLitM = WoodTransM;
+	share->WoodLitN = WoodTransN;
 	share->NetCBal = share->NetCBal - share->WoodDecResp;  // updating NetCBal
 
 
@@ -130,6 +145,7 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 	share->PlantN += Retrans;
 	FolLitN = FolNLoss - Retrans;
 	veg->FolNRetrans = FolNRetrans;
+	share->FolLitN = FolLitN;
 
 
 	//======================================================
@@ -137,6 +153,7 @@ void pnet_model::CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, 
 	{
 		share->FolLitM = share->FolLitM + (share->FolMass * BiomLossFrac);
 		FolLitN = FolLitN + (share->FolMass * BiomLossFrac * (share->FolNCon / 100));
+		share->FolLitN = FolLitN;
 		share->FolMass = share->FolMass * (1 - BiomLossFrac);
 		share->PlantC = share->PlantC * (1 - BiomLossFrac);
 		share->PlantN += (veg->MaxNStore - share->PlantN) * BiomLossFrac;  // increase PlantN?

@@ -28,6 +28,8 @@ class pnet_model
 	pnet_model();
 	virtual ~pnet_model();
 
+	enum { BG_FAST = 0, BG_SLOW = 1, BG_DEADMIC = 2, BG_CLASS_COUNT = 3 }; // FUN-CORPSE substrate classes: fast, slow, and dead microbial material
+
 
 	// paths to files
 	char sep[3];			// file separator. Wins:\\; Linux: /
@@ -44,7 +46,7 @@ class pnet_model
 	// model type
 
 	int modelmode;  // 1: site modeling or 2:regional modeling
-	int modeltype;  // model type, 0: pnet-day, 1: pnet-ii, 2: pnet-cn ,3 pnet_daily;
+	int modeltype;  // model type, 0: pnet-day, 1: pnet-ii, 2: pnet-cn, 3: pnet-daily, 4: pnet-fun-corpse
 
 
 
@@ -206,6 +208,119 @@ class pnet_model
 
 
 	}  veg_struct;
+
+	// FUN-CORPSE state for one compartment: organic layer, mineral rhizosphere, or mineral bulk soil
+	typedef struct
+	{
+		double unprotC[BG_CLASS_COUNT];		// unprotected carbon pools for fast, slow, and dead microbial material, g C m-2
+		double unprotN[BG_CLASS_COUNT];		// unprotected nitrogen pools for fast, slow, and dead microbial material, g N m-2
+		double protC[BG_CLASS_COUNT];		// protected carbon pools for fast, slow, and dead microbial material, g C m-2
+		double protN[BG_CLASS_COUNT];		// protected nitrogen pools for fast, slow, and dead microbial material, g N m-2
+		double livingMicrobeC;			// living microbial biomass carbon in this compartment, g C m-2
+		double livingMicrobeN;			// living microbial biomass nitrogen in this compartment, g N m-2
+		double CO2;					// CO2 released from this compartment during the current step, g C m-2
+		double Rtot;					// total respiration from this compartment during the current step, g C m-2
+
+		double lastDecompC[BG_CLASS_COUNT];	// diagnostic carbon decomposed from each substrate class during the current step, g C m-2
+		double lastDecompN[BG_CLASS_COUNT];	// diagnostic nitrogen decomposed from each substrate class during the current step, g N m-2
+		double lastGrossMineralization;		// diagnostic gross N mineralization in the current step, g N m-2
+		double lastGrossImmobilization;		// diagnostic gross N immobilization in the current step, g N m-2
+		double lastProtectionN;			// diagnostic N moved into protected pools during the current step, g N m-2
+		double lastDeprotectionN;		// diagnostic N released from protected pools during the current step, g N m-2
+		double lastTurnoverN;			// diagnostic microbial turnover N produced in the current step, g N m-2
+
+	} FUN_CORPSE_Compartment;
+
+	// FUN-CORPSE parameter set used by all belowground compartments
+	typedef struct
+	{
+		double vmaxref[BG_CLASS_COUNT];		// reference maximum decomposition rate for each substrate class
+		double Ea[BG_CLASS_COUNT];		// activation energy for each substrate class, J mol-1
+		double kC[BG_CLASS_COUNT];		// half-saturation constant for substrate carbon, g C m-2
+		double eup[BG_CLASS_COUNT];		// microbial carbon uptake efficiency for each substrate class
+		double nup[BG_CLASS_COUNT];		// microbial nitrogen uptake efficiency for each substrate class
+
+		double max_immobilization_rate;		// maximum daily fraction of mineral N that microbes can immobilize
+		double gas_diffusion_exp;		// exponent controlling moisture limitation on substrate access
+		double minMicrobeC;			// minimum microbial biomass as a fraction of unprotected C
+		double Tmic;				// microbial turnover time, years
+		double et;				// fraction of turnover routed to litter rather than immediate CO2
+		double CN_microb_default;		// fixed microbial C:N ratio when dynamic microbial C:N is disabled
+		double tProtected;			// turnover time of protected SOM pools, years
+		double protection_rate[BG_CLASS_COUNT];	// rate of transfer from unprotected to protected pools for each substrate class
+		double frac_turnover_min;		// fraction of microbial turnover N released directly to mineral N
+		double frac_turnover_slow;		// fraction of microbial turnover routed to slow substrate pools
+
+		double leaf_fast_frac;			// fraction of foliar litter entering the fast substrate pool
+		double leaf_slow_frac;			// fraction of foliar litter entering the slow substrate pool
+		double root_fast_frac;			// fraction of root litter entering the fast substrate pool
+		double root_slow_frac;			// fraction of root litter entering the slow substrate pool
+		double deadwood_fast_frac;		// fraction of deadwood-derived litter entering the fast substrate pool
+		double deadwood_slow_frac;		// fraction of deadwood-derived litter entering the slow substrate pool
+		double initial_protected_fraction;	// initial fraction of legacy HOM/HON assigned to protected bulk-soil pools
+		double initial_organic_fraction;	// initial fraction of legacy HOM/HON assigned to the organic horizon
+		double initial_rhizo_fraction;		// initial fraction of legacy mineral HOM/HON assigned to the rhizosphere compartment
+		double initial_active_n_scalar_organic;	// scalar applied to initial organic-horizon active-pool N (fast plus dead microbial unprotected N) to tune early N mineralization
+		double initial_active_n_scalar_mineral;	// scalar applied to initial mineral-soil active-pool N (fast plus dead microbial unprotected N in rhizo and bulk) to tune early N mineralization
+		double initial_bulk_slow_n_scalar;	// scalar applied to initial bulk-soil slow-pool N (protected plus unprotected) to tune early mineral-horizon N mineralization
+		double initial_bulk_deadmic_n_scalar;	// scalar applied to initial bulk-soil dead-microbial-pool N (protected plus unprotected) to tune early mineral-horizon N mineralization
+		double litter_transfer_to_soil;		// daily fraction of organic-layer material transferred to mineral soil
+		double rhizo_fraction;			// fallback fixed rhizosphere fraction used when no daily seasonal forcing file is available
+		int root_inputs_only_rhiz;		// flag for routing root-derived inputs only to rhizosphere
+
+		double f_exudate_Nacq;			// fraction of additional N acquisition C allocated to root exudation
+		double f_myc_Nacq;			// fraction of additional N acquisition C allocated to mycorrhiza
+		double C_Nacq_max_frac_GPP;		// maximum additional belowground N acquisition C as a fraction of daily GPP
+		double K_Ndef;				// half-saturation constant for plant N deficit response, g N m-2
+		double exudate_CN;			// assumed exudate C:N ratio when exudate N is represented
+		double Vmax_myc_N;			// maximum mycorrhizal organic N acquisition rate, g N m-2 d-1
+		double K_myc_C;				// half-saturation constant for mycorrhizal C allocation, g C m-2 d-1
+		double K_myc_N;				// half-saturation constant for organic N availability, g N m-2
+		double eta_myc_to_plant;		// fraction of mycorrhizally acquired N transferred to the plant
+		double myc_cost_n;			// coefficient on mineral N availability in the FUN mycorrhizal acquisition cost function
+		double myc_cost_c;			// coefficient on root biomass in the FUN mycorrhizal acquisition cost function
+		double nonmyc_cost_n;			// coefficient on mineral N availability in the non-mycorrhizal acquisition cost function
+		double nonmyc_cost_c;			// coefficient on root biomass in the non-mycorrhizal acquisition cost function
+		double storage_cost;			// baseline storage/retranslocation acquisition cost used in the simplified FUN optimizer
+		double litter_fungi_frac;		// fraction of mycorrhizal fungal production routed to the litter layer fast pool
+		double decomp_scalar_global;		// global scalar multiplier applied equally to decomposition rates in all horizons and substrate pools
+		double decomp_scalar_organic;		// scalar multiplier on decomposition rates in the organic horizon
+		double decomp_scalar_rhizo;		// scalar multiplier on decomposition rates in the rhizosphere horizon
+		double decomp_scalar_bulk;		// scalar multiplier on decomposition rates in the bulk-soil horizon
+		double gross_nmin_cap_frac_yr;		// FUN-only upper bound on gross N mineralization as a fraction of compartment organic N per year
+		double nitrification_cap_frac_day;	// FUN-only upper bound on nitrification as a fraction of the NH4 pool per day
+		double ndrain_cap_frac_day;		// FUN-only upper bound on nitrate leaching as a fraction of the NO3 pool per day
+
+		double CN_microb_min;			// lower bound of dynamic microbial C:N ratio
+		double CN_microb_max;			// upper bound of dynamic microbial C:N ratio
+		double K_Navail_CN;			// half-saturation constant linking available N to microbial C:N, g N m-2
+
+		int use_dynamic_microbe_cn;		// flag for dynamic versus fixed microbial C:N
+		int enable_root_exudation;		// flag for root exudation pathway
+		int enable_mycorrhizal_uptake;		// flag for mycorrhizal N uptake pathway
+
+	} FUN_CORPSE_Params;
+
+	// FUN-CORPSE belowground state aggregated across all soil compartments
+	typedef struct
+	{
+		FUN_CORPSE_Compartment organicLayer;		// FUN-CORPSE state for the surface organic layer
+		FUN_CORPSE_Compartment mineralRhizosphere;	// FUN-CORPSE state for mineral rhizosphere soil
+		FUN_CORPSE_Compartment mineralBulk;		// FUN-CORPSE state for mineral bulk soil
+
+		double rootExudateC;			// root exudate carbon added during the current step, g C m-2
+		double mycorrhizalC;			// carbon allocated to mycorrhiza during the current step, g C m-2
+		double mycorrhizalNToPlant;		// nitrogen transferred from mycorrhiza to plant during the current step, g N m-2
+		double microbialCN;			// active microbial C:N ratio used during the current step
+
+		double grossNMobilization;		// total gross N mobilization across all compartments during the current step, g N m-2
+		double grossNImmobilization;		// total gross N immobilization across all compartments during the current step, g N m-2
+		double netNMineralization;		// total net N mineralization across all compartments during the current step, g N m-2
+		double microbialTurnoverN;		// total microbial turnover N across all compartments during the current step, g N m-2
+		double deprotectionN;			// total N released from protected pools during the current step, g N m-2
+		double protectionN;			// total N moved into protected pools during the current step, g N m-2
+
+	} FUN_CORPSE_State;
 
 	//a structure to hold share data
 	typedef struct
@@ -399,6 +514,58 @@ class pnet_model
 		double OldRoot;
 		double UptakeEff;
 
+		FUN_CORPSE_State funBG;		// FUN-CORPSE belowground dynamic state shared across functions
+		FUN_CORPSE_Params funParams;	// FUN-CORPSE parameter set shared across functions
+		double FUNRhizoFractionByDOY[367];	// daily rhizosphere fraction forcing indexed by day of year, 1-366
+		double FUNRhizoFractionCurrent;	// rhizosphere fraction applied in the current simulation step
+		int FUNUseRhizoSeasonality;		// flag for enabling daily rhizosphere-fraction forcing from file
+
+		double FolLitN;			// foliar litter nitrogen available to FUN-CORPSE mapping in the current step, g N m-2
+		double RootLitM;			// root litter mass routed to FUN-CORPSE in the current step, g dry matter m-2
+		double RootLitN;			// root litter nitrogen routed to FUN-CORPSE in the current step, g N m-2
+		double WoodLitM;			// deadwood-derived litter mass routed to FUN-CORPSE in the current step, g dry matter m-2
+		double WoodLitN;			// deadwood-derived litter nitrogen routed to FUN-CORPSE in the current step, g N m-2
+		double PlantNUptakeLast;		// PnET active inorganic N uptake during the most recent step, g N m-2
+		double FUNPotentialGrowthC;		// FUN-only pending growth carbon used to solve the current day's external N acquisition before final allocation, g C m-2
+		double FUNPotentialNdemand;		// FUN-only pending plant N demand paired with FUNPotentialGrowthC for the current day, g N m-2
+		double FUNPotentialRootProdC;		// FUN-only potential root production carbon before N limitation for the current step, g C m-2
+		double FUNPotentialWoodProdC;		// FUN-only potential wood production carbon before N limitation for the current step, g C m-2
+		double RootExudateCYr;		// yearly cumulative root exudate carbon input, g C m-2
+		double MycorrhizalCYr;		// yearly cumulative mycorrhizal carbon allocation, g C m-2
+		double MycorrhizalNToPlantYr;	// yearly cumulative mycorrhizal N transfer to plant, g N m-2
+		double FUNFixNYr;			// yearly cumulative biological N fixation added through the FUN acquisition pathway, g N m-2
+		double FUNNdemandYr;			// yearly cumulative FUN-side plant nitrogen demand diagnostic, g N m-2
+		double FUNNdemandGapYr;		// yearly cumulative unmet FUN-side plant nitrogen demand before storage use, g N m-2
+		double FUNPotentialRootProdCYr;	// yearly cumulative potential root production carbon before N limitation, g C m-2
+		double FUNPotentialWoodProdCYr;	// yearly cumulative potential wood production carbon before N limitation, g C m-2
+		double FUNNLimitRootProdCYr;	// yearly cumulative root production carbon lost to N limitation, g C m-2
+		double FUNNLimitWoodProdCYr;	// yearly cumulative wood production carbon lost to N limitation, g C m-2
+		double FUNPlantNOverflowYr;	// yearly cumulative amount by which FUN-side uptake pushes PlantN above MaxNStore before later allocation or return flow, g N m-2
+		double FUNOverflowToNH4Yr;	// yearly cumulative PlantN overflow returned to NH4 in FUN runs, g N m-2
+		double FUNOverflowToNO3Yr;	// yearly cumulative PlantN overflow returned to NO3 in FUN runs, g N m-2
+		double BGGrossNMobilizationYr;	// yearly cumulative belowground gross N mobilization, g N m-2
+		double BGGrossNImmobilizationYr;	// yearly cumulative belowground gross N immobilization, g N m-2
+		double BGNetNMineralizationYr;	// yearly cumulative belowground net N mineralization, g N m-2
+		double BGOrgGrossNMineralizationYr;	// yearly cumulative organic-horizon gross N mineralization, g N m-2
+		double BGRhizGrossNMineralizationYr;	// yearly cumulative rhizosphere gross N mineralization, g N m-2
+		double BGBulkGrossNMineralizationYr;	// yearly cumulative bulk-soil gross N mineralization, g N m-2
+		double BGOrgGrossNImmobilizationYr;	// yearly cumulative organic-horizon gross N immobilization, g N m-2
+		double BGRhizGrossNImmobilizationYr;	// yearly cumulative rhizosphere gross N immobilization, g N m-2
+		double BGBulkGrossNImmobilizationYr;	// yearly cumulative bulk-soil gross N immobilization, g N m-2
+		double BGOrgNetNMineralizationYr;	// yearly cumulative organic-horizon net N mineralization, g N m-2
+		double BGRhizNetNMineralizationYr;	// yearly cumulative rhizosphere net N mineralization, g N m-2
+		double BGBulkNetNMineralizationYr;	// yearly cumulative bulk-soil net N mineralization, g N m-2
+		double BGMicrobialTurnoverNYr;	// yearly cumulative belowground microbial turnover N, g N m-2
+		double BGProtectionNYr;		// yearly cumulative N transferred into protected pools, g N m-2
+		double BGDeprotectionNYr;		// yearly cumulative N released from protected pools, g N m-2
+		double BGMicrobialCNLast;		// most recent microbial C:N ratio used by FUN-CORPSE
+		double AnnualStartTotalN;		// total ecosystem nitrogen at the start of the current year, g N m-2
+		double AnnualStartSoilOrgN;		// soil organic nitrogen mirror (HON/FUN soil pools) at the start of the current year, g N m-2
+		double AnnualStartMineralN;		// mineral nitrogen (NH4 + NO3) at the start of the current year, g N m-2
+		double AnnualStartPlantStoreN;	// plant storage nitrogen (PlantN + BudN) at the start of the current year, g N m-2
+		double AnnualStartVegStructN;	// structural vegetation nitrogen (foliar + wood + root) at the start of the current year, g N m-2
+		double AnnualStartDeadWoodN;	// dead wood nitrogen at the start of the current year, g N m-2
+
 	} share_struct;
 
 	//a structure to hold output data
@@ -436,6 +603,18 @@ class pnet_model
 		double* grossnmin;
 		double* nplantuptake;
 		double* grossnimob;
+		double* bgnetnmin;		// yearly belowground net N mineralization diagnostic from FUN-CORPSE
+		double* orggrossnmin;		// yearly organic-horizon gross N mineralization from FUN-CORPSE
+		double* rhizgrossnmin;		// yearly rhizosphere gross N mineralization from FUN-CORPSE
+		double* bulkgrossnmin;		// yearly bulk-soil gross N mineralization from FUN-CORPSE
+		double* mineralgrossnmin;	// yearly mineral-soil gross N mineralization from FUN-CORPSE
+		double* orgnetnmin_layer;	// yearly organic-horizon net N mineralization from FUN-CORPSE
+		double* rhiznetnmin_layer;	// yearly rhizosphere net N mineralization from FUN-CORPSE
+		double* bulknetnmin_layer;	// yearly bulk-soil net N mineralization from FUN-CORPSE
+		double* mineralnetnmin_layer;	// yearly mineral-soil net N mineralization from FUN-CORPSE
+		double* rootexudatec;		// yearly root exudate carbon diagnostic from FUN-CORPSE
+		double* mycnplant;		// yearly mycorrhizal N transfer to plant diagnostic from FUN-CORPSE
+		double* funfixn;		// yearly biological N fixation diagnostic from the FUN acquisition pathway, g N m-2
 		double* littern;
 		double* netnitrif;
 		double* nratio;
@@ -445,7 +624,65 @@ class pnet_model
 		double* rmresp;
 		double* rgresp;
 		double* decresp;
+		double* totalsoilresp;		// yearly total soil respiration using a unified definition: root maintenance plus soil decomposition
 		double* decwresp; //linghui 0729
+		double* orgfastc;
+		double* orgfastn;
+		double* orgslowc;
+		double* orgslown;
+		double* orgdeadc;
+		double* orgdeadn;
+		double* rhizfastc;
+		double* rhizfastn;
+		double* rhizslowc;
+		double* rhizslown;
+		double* rhizdeadc;
+		double* rhizdeadn;
+		double* bulkfastc;
+		double* bulkfastn;
+		double* bulkslowc;
+		double* bulkslown;
+		double* bulkdeadc;
+		double* bulkdeadn;
+		double* orgmicn;		// yearly microbial nitrogen in the organic horizon FUN-CORPSE compartment
+		double* rhizmicn;		// yearly microbial nitrogen in the rhizosphere FUN-CORPSE compartment
+		double* bulkmicn;		// yearly microbial nitrogen in the bulk soil FUN-CORPSE compartment
+		double* totalmicn;		// yearly total microbial nitrogen across all FUN-CORPSE compartments
+		double* orgprotn;		// yearly protected nitrogen in the organic horizon across all substrate classes, g N m-2
+		double* rhizprotn;		// yearly protected nitrogen in the rhizosphere across all substrate classes, g N m-2
+		double* bulkprotn;		// yearly protected nitrogen in the bulk soil across all substrate classes, g N m-2
+		double* totalprotn;		// yearly total protected nitrogen across all FUN-CORPSE compartments, g N m-2
+		double* protectionnyr;		// yearly cumulative N transferred into protected pools, g N m-2
+		double* deprotectionnyr;	// yearly cumulative N released from protected pools, g N m-2
+		double* funndemand;		// yearly cumulative FUN-side plant nitrogen demand diagnostic, g N m-2
+		double* funndemandgap;		// yearly cumulative unmet FUN-side plant nitrogen demand before storage use, g N m-2
+		double* funpotrootc;		// yearly cumulative potential root production carbon before N limitation, g C m-2
+		double* funpotwoodc;		// yearly cumulative potential wood production carbon before N limitation, g C m-2
+		double* funnlimitrootc;		// yearly cumulative root production carbon lost to N limitation, g C m-2
+		double* funnlimitwoodc;		// yearly cumulative wood production carbon lost to N limitation, g C m-2
+		double* funplantnoverflow;	// yearly cumulative temporary PlantN overflow created immediately after FUN uptake, g N m-2
+		double* funoverflowtonh4;	// yearly cumulative PlantN overflow returned to NH4, g N m-2
+		double* funoverflowtono3;	// yearly cumulative PlantN overflow returned to NO3, g N m-2
+		double* nstart_total;		// total ecosystem nitrogen at the start of each year, g N m-2
+		double* nend_total;		// total ecosystem nitrogen at the end of each year, g N m-2
+		double* dn_total;		// annual change in total ecosystem nitrogen, g N m-2 yr-1
+		double* nstart_soilorg;		// soil organic nitrogen at the start of each year, g N m-2
+		double* nend_soilorg;		// soil organic nitrogen at the end of each year, g N m-2
+		double* dn_soilorg;		// annual change in soil organic nitrogen, g N m-2 yr-1
+		double* nstart_mineral;		// mineral nitrogen (NH4 + NO3) at the start of each year, g N m-2
+		double* nend_mineral;		// mineral nitrogen (NH4 + NO3) at the end of each year, g N m-2
+		double* dn_mineral;		// annual change in mineral nitrogen, g N m-2 yr-1
+		double* nstart_plantstore;	// plant storage nitrogen (PlantN + BudN) at the start of each year, g N m-2
+		double* nend_plantstore;	// plant storage nitrogen (PlantN + BudN) at the end of each year, g N m-2
+		double* dn_plantstore;		// annual change in plant storage nitrogen, g N m-2 yr-1
+		double* nstart_vegstruct;	// structural vegetation nitrogen at the start of each year, g N m-2
+		double* nend_vegstruct;		// structural vegetation nitrogen at the end of each year, g N m-2
+		double* dn_vegstruct;		// annual change in structural vegetation nitrogen, g N m-2 yr-1
+		double* nstart_deadwood;	// dead wood nitrogen at the start of each year, g N m-2
+		double* nend_deadwood;		// dead wood nitrogen at the end of each year, g N m-2
+		double* dn_deadwood;		// annual change in dead wood nitrogen, g N m-2 yr-1
+		double* ngas;			// annual gaseous nitrogen loss (N2O + NO + N2), g N m-2 yr-1
+		double* nbalance_resid;		// annual total-N residual: dTotalN - (Ndep - NDrain - Ngas), g N m-2 yr-1
 		double* folm;
 		double* deadwoodm;
 		double* woodm;
@@ -593,6 +830,7 @@ class pnet_model
 	void pnet_cn();
 	int getdays(int year, int doy); // calculate number of days for each month
 	void AllocateMo(veg_struct* veg, share_struct* share, int rstep, int CN_Mode);
+	void AllocateMoFUN(site_struct* site, veg_struct* veg, clim_struct* clim, int rstep, share_struct* share, int CN_Mode);	// FUN-only final allocation wrapper: run standard AllocateMo after FUN uptake has updated PlantN for the current day
 	void AllocateYr(site_struct* site, veg_struct* veg, clim_struct* clim, int rstep, share_struct* share, int CN_Mode);
 	void AtmEnviron(site_struct* site, clim_struct* clim, int rstep, share_struct* share);
 	void CNTrans(site_struct* site, veg_struct* veg, clim_struct* clim, int rstep, share_struct* share);
@@ -608,6 +846,8 @@ class pnet_model
 
 	void ReadInput(site_struct* site, veg_struct* veg, share_struct* share, char* inputname);
 	void ReadClim(clim_struct* clim, char* climname);
+	void ReadFUNCORPSEParams(share_struct* share, char* inputname);
+	void ReadFUNRhizoSeasonality(share_struct* share, char* inputname);	// read daily rhizosphere fraction forcing for FUN-CORPSE from the input folder
 
 	void storeoutput(veg_struct* veg, share_struct* share, out_struct* out, int rstep, int* ystep, int NewYear);
 	void WriteoutMo(site_struct* site, veg_struct* veg, clim_struct* clim, share_struct* share, int rstep, FILE*& fileoutM);
@@ -621,6 +861,7 @@ class pnet_model
 
 	// specific for PnET-Daily
 	void pnet_daily();
+	void pnet_fun_corpse();
 	void ReadClimDay(clim_struct* clim, char* climname);
 	void WriteoutDay(site_struct* site, veg_struct* veg, clim_struct* clim, share_struct* share, int rstep, FILE*& fileout);
 	int getmonth(int year, int doy);  // get the month of doy
@@ -710,6 +951,30 @@ class pnet_model
 
 
 	void preprocess_climate(site_struct* site, share_struct* share, clim_struct* climday, clim_struct* climmon);
+
+	// FUN-CORPSE initialization and update routines
+	void InitializeFUN_CORPSEBelowground(site_struct* site, share_struct* share);
+	void DecompFUN_CORPSE(site_struct* site, veg_struct* veg, clim_struct* clim, int rstep, share_struct* share);
+	void UpdateFUN_CORPSEBelowground(site_struct* site, veg_struct* veg, clim_struct* clim, int rstep, share_struct* share, double TMult, double WMult);
+	void UpdateCORPSECompartment(const char* label, FUN_CORPSE_Compartment* comp, double soilT_K, double theta, double* NH4, double* NO3, double dt_years, FUN_CORPSE_Params* params, double microbialCN, double decompScalar);
+
+	// FUN-CORPSE helper functions for microbial stoichiometry and plant N demand
+	double ComputeDynamicMicrobialCN(share_struct* share);
+	double ComputeAdditionalNacqCAllocation(veg_struct* veg, share_struct* share);
+	double ComputePlantNDeficit(veg_struct* veg, share_struct* share);
+	void EstimateFUNAllocationDemand(veg_struct* veg, clim_struct* clim, int rstep, share_struct* share, int CN_Mode);	// FUN-only pre-allocation demand estimator: cache today's potential growth C and N demand for later FUN uptake
+	double ComputeFUNPassiveNUptake(site_struct* site, veg_struct* veg, share_struct* share, double NdemandTotal);	// FUN-only passive N uptake using the legacy PnET root-uptake formulation, capped at 80 percent of currently available mineral N
+	void ApplyFUNCostBasedNUptake(site_struct* site, veg_struct* veg, share_struct* share, int doy, double Cavailable, double NdemandTotal);	// FUN-only N acquisition optimizer: solve cost-based external N uptake for the current day's growth C and N demand before final allocation
+	double GetFUNRhizoFractionForDOY(share_struct* share, int doy);	// return the rhizosphere fraction forcing used for a given day of year
+	void ApplyFUNRhizoSeasonality(share_struct* share, int doy);	// redistribute mineral FUN-CORPSE pools to the target rhizosphere fraction for the current day
+
+	// FUN-CORPSE transfer, synchronization, and diagnostic helpers
+	void TransferOrganicLayerToMineralSoil(share_struct* share);
+	void SyncLegacySoilPoolsFromFUN(share_struct* share);
+	void ResetFUN_CORPSEFluxDiagnostics(share_struct* share);
+
+	// PnET inorganic N uptake retained as the active plant uptake pathway
+	void PnETActiveRootUptake(site_struct* site, veg_struct* veg, share_struct* share, double TMult);
 
 	//int netcdf_sfc_pres_temp_rd();
 };

@@ -24,6 +24,7 @@ void pnet_model::pnet_cn()
 	// read in input data from input files
 
 	ReadInput(&site,&veg,&share,inputname);
+	ReadFUNCORPSEParams(&share, inputname);
 
 	ReadClim(&clim, climname);
 	clim.timestep = 0; // for monthly time step

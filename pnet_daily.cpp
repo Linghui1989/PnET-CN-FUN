@@ -41,6 +41,7 @@ void pnet_model::pnet_daily()
 	// read in input data from input files
 
 	ReadInput(&site, &veg, &share, inputname);
+	ReadFUNCORPSEParams(&share, inputname);
 
 	ReadClimDay(&climday, climdayfile);	// read daily climate
 

@@ -57,6 +57,8 @@ void  pnet_model::pnet_site()
 
 	if (3==modeltype)	pnet_daily(); // PnET-Daily
 
+	if (4==modeltype)	pnet_fun_corpse(); // PnET-FUN-CORPSE
+
 }
 
 void pnet_model::PathDefine(int wins)

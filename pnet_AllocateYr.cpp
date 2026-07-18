@@ -27,8 +27,11 @@ void pnet_model::AllocateYr(site_struct* site, veg_struct* veg, clim_struct* cli
 			BiomLossFrac = site->distintensity[i];
 			RemoveFrac = site->distremove[i];    // remove out of field
 			RootLossFrac = site->distRootloss[i];
-			share->HOM *= (1 - site->distsoilloss[i]);
-			share->HON *= (1 - site->distsoilloss[i]);
+			if (modeltype != 4)
+			{
+				share->HOM *= (1 - site->distsoilloss[i]);
+				share->HON *= (1 - site->distsoilloss[i]);
+			}
 			share->FolMass *= (1 - BiomLossFrac);
 			if (veg->FolMassMax < site->folregen[i])veg->FolMassMax = site->folregen[i];
 			break;
@@ -64,7 +67,10 @@ void pnet_model::AllocateYr(site_struct* site, veg_struct* veg, clim_struct* cli
 		share->PlantC *= (1 - site->agrem * (1 - site->agrem));
 		share->PlantN *= (1 - site->agrem * (1 - site->agrem));
 
-		share->HON += 1.5; //Linghui Meng 11262020 assume N addition
+		if (modeltype != 4)
+		{
+			share->HON += 1.5; //Linghui Meng 11262020 assume N addition
+		}
 	}
 	
 	//if the decidous tree foliar mass greater than 0 at the end of year, make it to 0 and relocate C and N
@@ -81,16 +87,23 @@ void pnet_model::AllocateYr(site_struct* site, veg_struct* veg, clim_struct* cli
 		share->TotalLitterM += share->FolLitM;
 		share->TotalLitterN += FolLitN;
 
-		share->HOM = share->HOM + share->TotalLitterM / share->dayspan;
-		share->HON = share->HON + share->TotalLitterN / share->dayspan;
-		//delete transfered litter from litter pool
-		share->TotalLitterM -= share->TotalLitterM / share->dayspan;
-		share->TotalLitterN -= share->TotalLitterN / share->dayspan;
+		if (modeltype != 4)
+		{
+			share->HOM = share->HOM + share->TotalLitterM / share->dayspan;
+			share->HON = share->HON + share->TotalLitterN / share->dayspan;
+			// delete transferred litter from litter pool in legacy soil mode
+			share->TotalLitterM -= share->TotalLitterM / share->dayspan;
+			share->TotalLitterN -= share->TotalLitterN / share->dayspan;
+		}
 
 		share->FolMass = 0;
 		//in case plantN greater than maximum N storage
 		if (share->PlantN > veg->MaxNStore)
 		{
+			if (modeltype == 4)
+			{
+				share->FUNOverflowToNH4Yr += (share->PlantN - veg->MaxNStore);
+			}
 			share->NH4 += (share->PlantN - veg->MaxNStore);  // ZZX revised
 			share->PlantN = veg->MaxNStore;
 		}
@@ -276,12 +289,18 @@ void pnet_model::AllocateYr(site_struct* site, veg_struct* veg, clim_struct* cli
 	// PnET-CN Only -----------------------------------------------------------------
 	if (CN_Mode == 1)
 	{
+		if (modeltype == 4)
+		{
+			// In PnET-FUN, HOM/HON are legacy mirrors of FUN-CORPSE pools only.
+			SyncLegacySoilPoolsFromFUN(share);
+		}
+
 		share->RootNSinkEff = sqrt(1 - (share->PlantN / veg->MaxNStore));   // this is based on monthly rate
 
 		//Annual total variables for PnET-CN
 		share->NEP = share->TotPsn - share->SoilDecRespYr - share->WoodDecRespYr - share->WoodMRespYr
 			- share->WoodGRespYr - share->FolGRespYr - share->RootMRespYr - share->RootGRespYr;
-		share->FolN = (share->FolMass * veg->FolNCon / 100);
+		share->FolN = (share->FolMass * share->FolNCon / 100.0);
 		share->FolC = share->FolMass * veg->CFracBiomass;
 		share->TotalN = share->FolN + share->WoodMassN + share->RootMassN + share->HON
 			+ share->NH4 + share->NO3 + share->BudN + share->DeadWoodN + share->PlantN;

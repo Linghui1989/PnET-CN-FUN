@@ -17,6 +17,14 @@ void pnet_model::Leach(clim_struct* clim, int rstep, share_struct* share)
 	f_retain = std::min(0.96, std::max(0.10, f_retain));
 
 	share->NDrain = share->FracDrain * share->NO3 * (1 - f_retain);
+	if (modeltype == 4)
+	{
+		const double nDrainCap = std::max(0.0, share->NO3) * std::max(0.0, share->funParams.ndrain_cap_frac_day) * share->dayspan;
+		if (nDrainCap > 0.0 && share->NDrain > nDrainCap)
+		{
+			share->NDrain = nDrainCap;
+		}
+	}
 	share->NO3 -= share->NDrain;
 	share->NDrainYr = share->NDrainYr + share->NDrain;
 	share->NDrainMgL = (share->NDrain * 1000) / (share->Drainage * 10+1.0E-6);  //to convert to mg/l

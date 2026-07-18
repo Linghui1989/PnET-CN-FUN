@@ -38,6 +38,18 @@ void pnet_model::memset_out(int nyrs, out_struct* out)
 	out->grossnmin = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->nplantuptake = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->grossnimob = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bgnetnmin = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orggrossnmin = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizgrossnmin = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkgrossnmin = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->mineralgrossnmin = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgnetnmin_layer = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhiznetnmin_layer = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulknetnmin_layer = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->mineralnetnmin_layer = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rootexudatec = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->mycnplant = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funfixn = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->littern = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->netnitrif = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->nratio = (double*)malloc((nyrs + 1) * sizeof(double));
@@ -47,7 +59,65 @@ void pnet_model::memset_out(int nyrs, out_struct* out)
 	out->rmresp = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->rgresp = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->decresp = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->totalsoilresp = (double*)malloc((nyrs + 1) * sizeof(double));
 	out->decwresp = (double*)malloc((nyrs + 1) * sizeof(double)); //Linghui 0729
+	out->orgfastc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgfastn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgslowc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgslown = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgdeadc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgdeadn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizfastc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizfastn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizslowc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizslown = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizdeadc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizdeadn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkfastc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkfastn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkslowc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkslown = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkdeadc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkdeadn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgmicn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizmicn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkmicn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->totalmicn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->orgprotn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->rhizprotn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->bulkprotn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->totalprotn = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->protectionnyr = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->deprotectionnyr = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funndemand = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funndemandgap = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funpotrootc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funpotwoodc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funnlimitrootc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funnlimitwoodc = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funplantnoverflow = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funoverflowtonh4 = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->funoverflowtono3 = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_total = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_total = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_total = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_soilorg = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_soilorg = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_soilorg = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_mineral = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_mineral = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_mineral = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_plantstore = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_plantstore = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_plantstore = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_vegstruct = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_vegstruct = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_vegstruct = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nstart_deadwood = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nend_deadwood = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->dn_deadwood = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->ngas = (double*)malloc((nyrs + 1) * sizeof(double));
+	out->nbalance_resid = (double*)malloc((nyrs + 1) * sizeof(double));
 
 
 	out->folm = (double*)malloc((nyrs + 1) * sizeof(double));
@@ -76,8 +146,27 @@ void pnet_model::memset_out(int nyrs, out_struct* out)
 	if (!out->grosspsn || !out->netpsn || !out->netcbal || !out->vpd || !out->folmass || !out->plantnMo || !out->nppfol || !out->nppwood ||
 		!out->npproot || !out->nep || !out->gpp || !out->waterstress || !out->trans || !out->soilwater || !out->psn || !out->drain || !out->prec ||
 		!out->evap || !out->et || !out->plantc || !out->budc || !out->woodc || !out->rootc || !out->plantnYr || !out->budn || !out->ndrain ||
-		!out->netnmin || !out->grossnmin || !out->nplantuptake || !out->grossnimob || !out->littern || !out->netnitrif || !out->nratio ||
-		!out->foln || !out->litm || !out->litn || !out->rmresp || !out->rgresp || !out->decresp || !out->decwresp)  //Linghui 0729
+		!out->netnmin || !out->grossnmin || !out->nplantuptake || !out->grossnimob || !out->bgnetnmin ||
+		!out->orggrossnmin || !out->rhizgrossnmin || !out->bulkgrossnmin || !out->mineralgrossnmin ||
+		!out->orgnetnmin_layer || !out->rhiznetnmin_layer || !out->bulknetnmin_layer || !out->mineralnetnmin_layer ||
+		!out->rootexudatec || !out->mycnplant || !out->funfixn || !out->littern || !out->netnitrif || !out->nratio ||
+		!out->foln || !out->litm || !out->litn || !out->rmresp || !out->rgresp || !out->decresp || !out->totalsoilresp || !out->decwresp ||
+		!out->orgfastc || !out->orgfastn || !out->orgslowc || !out->orgslown || !out->orgdeadc || !out->orgdeadn ||
+		!out->rhizfastc || !out->rhizfastn || !out->rhizslowc || !out->rhizslown || !out->rhizdeadc || !out->rhizdeadn ||
+		!out->bulkfastc || !out->bulkfastn || !out->bulkslowc || !out->bulkslown || !out->bulkdeadc || !out->bulkdeadn ||
+		!out->orgmicn || !out->rhizmicn || !out->bulkmicn || !out->totalmicn ||
+		!out->orgprotn || !out->rhizprotn || !out->bulkprotn || !out->totalprotn ||
+		!out->protectionnyr || !out->deprotectionnyr ||
+		!out->funndemand || !out->funndemandgap || !out->funpotrootc || !out->funpotwoodc ||
+		!out->funnlimitrootc || !out->funnlimitwoodc ||
+		!out->funplantnoverflow || !out->funoverflowtonh4 || !out->funoverflowtono3 ||
+		!out->nstart_total || !out->nend_total || !out->dn_total ||
+		!out->nstart_soilorg || !out->nend_soilorg || !out->dn_soilorg ||
+		!out->nstart_mineral || !out->nend_mineral || !out->dn_mineral ||
+		!out->nstart_plantstore || !out->nend_plantstore || !out->dn_plantstore ||
+		!out->nstart_vegstruct || !out->nend_vegstruct || !out->dn_vegstruct ||
+		!out->nstart_deadwood || !out->nend_deadwood || !out->dn_deadwood ||
+		!out->ngas || !out->nbalance_resid)  //Linghui 0729
 	{
 		printf("Unable to allocate memory for out_struct!\n");
 		exit(1);
@@ -217,6 +306,18 @@ void pnet_model::memfree_out(out_struct* out)
 	free(out->grossnmin);
 	free(out->nplantuptake);
 	free(out->grossnimob);
+	free(out->bgnetnmin);
+	free(out->orggrossnmin);
+	free(out->rhizgrossnmin);
+	free(out->bulkgrossnmin);
+	free(out->mineralgrossnmin);
+	free(out->orgnetnmin_layer);
+	free(out->rhiznetnmin_layer);
+	free(out->bulknetnmin_layer);
+	free(out->mineralnetnmin_layer);
+	free(out->rootexudatec);
+	free(out->mycnplant);
+	free(out->funfixn);
 	free(out->littern);
 	free(out->netnitrif);
 	free(out->nratio);
@@ -226,7 +327,65 @@ void pnet_model::memfree_out(out_struct* out)
 	free(out->rmresp);
 	free(out->rgresp);
 	free(out->decresp);
+	free(out->totalsoilresp);
 	free(out->decwresp); //Linghui 0729
+	free(out->orgfastc);
+	free(out->orgfastn);
+	free(out->orgslowc);
+	free(out->orgslown);
+	free(out->orgdeadc);
+	free(out->orgdeadn);
+	free(out->rhizfastc);
+	free(out->rhizfastn);
+	free(out->rhizslowc);
+	free(out->rhizslown);
+	free(out->rhizdeadc);
+	free(out->rhizdeadn);
+	free(out->bulkfastc);
+	free(out->bulkfastn);
+	free(out->bulkslowc);
+	free(out->bulkslown);
+	free(out->bulkdeadc);
+	free(out->bulkdeadn);
+	free(out->orgmicn);
+	free(out->rhizmicn);
+	free(out->bulkmicn);
+	free(out->totalmicn);
+	free(out->orgprotn);
+	free(out->rhizprotn);
+	free(out->bulkprotn);
+	free(out->totalprotn);
+	free(out->protectionnyr);
+	free(out->deprotectionnyr);
+	free(out->funndemand);
+	free(out->funndemandgap);
+	free(out->funpotrootc);
+	free(out->funpotwoodc);
+	free(out->funnlimitrootc);
+	free(out->funnlimitwoodc);
+	free(out->funplantnoverflow);
+	free(out->funoverflowtonh4);
+	free(out->funoverflowtono3);
+	free(out->nstart_total);
+	free(out->nend_total);
+	free(out->dn_total);
+	free(out->nstart_soilorg);
+	free(out->nend_soilorg);
+	free(out->dn_soilorg);
+	free(out->nstart_mineral);
+	free(out->nend_mineral);
+	free(out->dn_mineral);
+	free(out->nstart_plantstore);
+	free(out->nend_plantstore);
+	free(out->dn_plantstore);
+	free(out->nstart_vegstruct);
+	free(out->nend_vegstruct);
+	free(out->dn_vegstruct);
+	free(out->nstart_deadwood);
+	free(out->nend_deadwood);
+	free(out->dn_deadwood);
+	free(out->ngas);
+	free(out->nbalance_resid);
 	free(out->folm);
 	free(out->deadwoodm);
 	free(out->woodm);

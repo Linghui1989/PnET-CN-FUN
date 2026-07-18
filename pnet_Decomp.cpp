@@ -57,9 +57,6 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 		WMult = share->MeanSoilMoistEff;
 		if (site->WaterStress == 0) WMult = 1;
 
-		//		share->EnvMaxFol = TMult;	//Linghui 20200511
-		//		share->SppMaxFol = WMult; //Linghui 20200511
-
 				//Add litter to Humus pool
 		share->HOM = share->HOM + share->TotalLitterM / share->dayspan;
 		share->HON = share->HON + share->TotalLitterN / share->dayspan;
@@ -67,9 +64,7 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 		//Humus dynamics
 
 		KhoAct = veg->Kho / 365.0; //* share->dayspan;
-	//	KhoAct = -log(veg->Kho) / 365.0; //* share->dayspan;
 		DHO = share->HOM * (1 - exp(-KhoAct * TMult * WMult));
-		//	DHO = share->HOM * (1 - exp(-KhoAct * TMult ));
 		GrossNMin = DHO * (share->HON / share->HOM);
 
 		const double a_ndep = -1.814;
@@ -99,30 +94,37 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 
 		share->NetCBal = share->NetCBal - share->SoilDecResp; // updating NetCBal
 
-		//Immobilization and net mineralization
-		SoilPctN = (share->HON / share->HOM) * 100;
-		NReten = (veg->NImmobA + veg->NImmobB * SoilPctN) / 100;
-		if (NReten > 1) { NReten = 1; }
-		if (NReten < 0) { NReten = 0; }
+		// Immobilization and net mineralization
+		if (modeltype == 4)
+		{
+			// PnET-FUN-CORPSE uses DecompFUN_CORPSE() for belowground N cycling.
+			// If this legacy routine is reached, do not apply the fixed NReten
+			// immobilization formulation on top of the FUN-CORPSE bookkeeping.
+			GrossNImmob = 0.0;
+			NetNMin = GrossNMin;
+		}
+		else
+		{
+			SoilPctN = (share->HON / share->HOM) * 100;
+			NReten = (veg->NImmobA + veg->NImmobB * SoilPctN) / 100;
+			if (NReten > 1) { NReten = 1; }
+			if (NReten < 0) { NReten = 0; }
 
-		GrossNImmob = NReten * GrossNMin;
+			GrossNImmob = NReten * GrossNMin;
 
-		// Microbial immobilization of N is accompanied by proportional C immobilization,
-		// based on a fixed microbial biomass C:N ratio (~8:1).
-		// Returning C to HOM prevents artificial depletion of soil C:N ratio,
-		// as N immobilization without corresponding C retention violates mass balance.
-		double MicrobialCN = 8.0;  
-		double CImmob = GrossNImmob * MicrobialCN;
+			double MicrobialCN = 8.0;
+			double CImmob = GrossNImmob * MicrobialCN;
 
-		share->HOM += CImmob;
-		share->HON += GrossNImmob;
+			share->HOM += CImmob;
+			share->HON += GrossNImmob;
+			NetNMin = GrossNMin - GrossNImmob;
+		}
+
 		share->GrossNImmobYr = share->GrossNImmobYr + GrossNImmob;
-		NetNMin = GrossNMin - GrossNImmob;
 		share->NH4 = share->NH4 + NetNMin;
 
 
 		// nitrification========================================================
-		// ---- seasonal baseline ----
 		double nit_season_factor;
 		int doy = clim->doy[rstep];
 
@@ -138,28 +140,15 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 
 		fNRatioNit = share->dayspan/30.4;  // daily step; Linghui Meng 20201221
 		NetNitr = share->NH4 * share->NRatioNit * fNRatioNit * nit_season_factor;
-		// NetNitr = (share->NH4 * (-log(share->NRatioNit)*fNRatioNit));
 
-		//===========================================================================
-		// NOx/N2O emission from soil nitrification
-		//===========================================================================
-
-		share->WFPS = share->Water / site->WHC * 0.75;  //water filled pore space = soilwater/porosity,*0.75 is for WHC is 0.75 porosity
+		share->WFPS = share->Water / site->WHC * 0.75;
 		if (share->WFPS > 1.0)share->WFPS = 1.0;
 
 		Wnit = 1.0;
-		//	Wnit=1/(0.524+exp(4.27-16.51*share->WFPS+13.64*share->WFPS*share->WFPS));
+		NitLostGas = Kn * NetNitr * Wnit;
+		NitLostGas = 0;
 
-
-		NitLostGas = Kn * NetNitr * Wnit;   //(Davidson,2000;parton,2001)
-
-		//===================================================================
-		// to discard N gas emission processes, set NitLostGas =0;  // zzx
-
-		NitLostGas = 0;  // zzx
-	   //====================================================================
-
-		R_NOx_N2O = pow(10.0, -3.79 * share->WFPS + 2.73); //(Davidson,2000)
+		R_NOx_N2O = pow(10.0, -3.79 * share->WFPS + 2.73);
 		FN2O = NitLostGas / (1.0 + R_NOx_N2O);
 		FNO = NitLostGas - FN2O;
 
@@ -167,70 +156,43 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 		share->NH4 = share->NH4 - NetNitr - NitLostGas;
 
 
-		//===========================================================================
 		// soil denitrification
-		//===========================================================================
-
-		// temperature effect on denitrification(Andrews, 1997)
 		Q10 = 2.0;
 		share->Tsoil = share->Tave;
-		if (0.0 < share->Tsoil)  den_T = pow(Q10, 0.1 * (share->Tsoil - 20.0)); // referrence temperature where den_T=1 is 20 oC
-		else    den_T = 0.01;  //    from dndc  or if iced, it is 0.1
+		if (0.0 < share->Tsoil)  den_T = pow(Q10, 0.1 * (share->Tsoil - 20.0));
+		else    den_T = 0.01;
 
-		// soil water effect on denitrification
-		Wcrit = 0.75;   // den_W =0.5
+		Wcrit = 0.75;
 		den_W = 1.0 - 1.0 / (1.0 + exp(12.5 * (share->WFPS - Wcrit)));
 
-		// soil respiration effect as indicator of DOC
-		//	den_CO2 = 24000
-		Ccrit = 1.8; // 1.8 gC/m2/day for soil respiration where den-co2= 0.5
-		Cmax = 3;		// gC/m2/day for soil respiration  where den-co2= 1
+		Ccrit = 1.8;
+		Cmax = 3;
 		den_CO2 = 1.0 - 1.0 / (1.0 + exp(6.8 * (share->SoilDecResp - Ccrit) / Cmax));
 		den_CO2 = 1.0;
 
-		site->Kden = 0.03; //* share->dayspan;//0.025*30=mon-1,  default 0.03 (day-1) (McCray,2005)
-//		site->Kden = 0.13; //* share->dayspan;//0.025*30=mon-1,  default 0.03 (day-1) (McCray,2005)  // for HB
+		site->Kden = 0.03;
 
 		if (den_W > den_CO2) den_W = den_CO2;
 		Fdeni = share->NO3 * site->Kden * den_T * den_W;
 
-		// N2/N2O emission from soil in denitrification
-		R_N2_N2O = 1.44 * exp(1.33 * share->WFPS);    //(Del Grosso,2000)
+		R_N2_N2O = 1.44 * exp(1.33 * share->WFPS);
 
-		// sigmodal curve as an alternative function
 		double RnA, RnB;
 
-		share->RnMax = 10.0; // regression from (Schlesinger,2009)
-		share->RnX1 = 0.7; // point 1
+		share->RnMax = 10.0;
+		share->RnX1 = 0.7;
 		share->RnY1 = 1.5;
 
-		share->RnX2 = 1.0;	//point 2
-		share->RnY2 = share->RnMax; // flooding //(Schlesinger,2009)
-
-
-		//	share->RnY1 = share->RnY1/share->RnMax;   // relative to max
-		//	share->RnY2 = share->RnY2/share->RnMax;
-		//  Y=RnMax*x/(x+e(a-bx)) through (x1,y1),(x2,y2)
-		//	RnB = (log(share->RnX1*(share->RnMax-share->RnY1)/share->RnY1)-log(share->RnX2*(share->RnMax-share->RnY2)/share->RnY2))/(share->RnX2-share->RnX1);
-		//	RnA = log(share->RnX1*(share->RnMax-share->RnY1)/share->RnY1) + RnB * share->RnX1;
-		//	R_N2_N2O = share->RnMax *share->WFPS/(share->WFPS + exp(RnA- RnB *share->WFPS )) ; //    //(Schlesinger,2009)
-
-
-		//  Y=a*exp(bx) through (x1,y1),(x2,y2)
+		share->RnX2 = 1.0;
+		share->RnY2 = share->RnMax;
 
 		RnB = log(share->RnY2 / share->RnY1) / (share->RnX2 - share->RnX1);
 		RnA = share->RnY1 * exp(-RnB * share->RnX1);
 
-		R_N2_N2O = RnA * exp(RnB * share->WFPS); //    //(Schlesinger,2009)
-
+		R_N2_N2O = RnA * exp(RnB * share->WFPS);
 
 		FN2Od = Fdeni * 1 / (1 + R_NOx_N2O + R_N2_N2O);
-
-		//===================================================================
-		// to discard N gas emission processes, set FN2Od =0;  // zzx
-
 		FN2Od = 0.0;
-		//========================================================================
 
 		FNOd = R_NOx_N2O * FN2Od;
 		FN2 = FN2Od * R_N2_N2O;
@@ -247,12 +209,7 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 		//Plant Uptake
 
 		RootNSinkStr = share->RootNSinkEff * TMult;
-//		if (RootNSinkStr > 0.3)RootNSinkStr = 0.3;
-//		if (RootNSinkStr > 0.98)RootNSinkStr = 0.98;
-		RootNSinkStr = RootNSinkStr*(share->dayspan / 30.4)*1.5;// *1.5 to make daily to the same as monthly;  // daily step
-//		RootNSinkStr =-log( RootNSinkStr) / 30.4;//  to make daily to the same as monthly;  // daily step
-		//if there is no foliar, root N uptake is 0
-//		if (share->FolMass == 0)RootNSinkStr = 0;
+		RootNSinkStr = RootNSinkStr*(share->dayspan / 30.4)*1.5;
 
 		if (site->SnowPack > 0) {
 			RootNSinkStr = 0;
@@ -270,7 +227,7 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 		else
 		{
 			share->UptakeEff = 1;
-			share->OldRoot = 0; //consider the root back the functional same as that before disturbance 
+			share->OldRoot = 0;
 		}
 
 
@@ -299,5 +256,3 @@ void pnet_model::Decomp(site_struct* site, veg_struct* veg, clim_struct* clim, i
 
 	}
 }
-
-

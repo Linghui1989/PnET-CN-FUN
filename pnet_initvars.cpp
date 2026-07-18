@@ -185,6 +185,49 @@ void pnet_model::initvars(site_struct* site, veg_struct* veg, share_struct* shar
 
 	// UptakeEff is root N uptake efficiency
 	share->UptakeEff = 1;
+	share->PlantNUptakeLast = 0;
+	share->FUNPotentialRootProdC = 0;
+	share->FUNPotentialWoodProdC = 0;
+	share->RootExudateCYr = 0;
+	share->MycorrhizalCYr = 0;
+	share->MycorrhizalNToPlantYr = 0;
+	share->FUNFixNYr = 0;
+	share->FUNNdemandYr = 0;
+	share->FUNNdemandGapYr = 0;
+	share->FUNPotentialRootProdCYr = 0;
+	share->FUNPotentialWoodProdCYr = 0;
+	share->FUNNLimitRootProdCYr = 0;
+	share->FUNNLimitWoodProdCYr = 0;
+	share->FUNPlantNOverflowYr = 0;
+	share->FUNOverflowToNH4Yr = 0;
+	share->FUNOverflowToNO3Yr = 0;
+	share->BGGrossNMobilizationYr = 0;
+	share->BGGrossNImmobilizationYr = 0;
+	share->BGNetNMineralizationYr = 0;
+	share->BGOrgGrossNMineralizationYr = 0;
+	share->BGRhizGrossNMineralizationYr = 0;
+	share->BGBulkGrossNMineralizationYr = 0;
+	share->BGOrgGrossNImmobilizationYr = 0;
+	share->BGRhizGrossNImmobilizationYr = 0;
+	share->BGBulkGrossNImmobilizationYr = 0;
+	share->BGOrgNetNMineralizationYr = 0;
+	share->BGRhizNetNMineralizationYr = 0;
+	share->BGBulkNetNMineralizationYr = 0;
+	share->BGMicrobialTurnoverNYr = 0;
+	share->BGProtectionNYr = 0;
+	share->BGDeprotectionNYr = 0;
+	share->BGMicrobialCNLast = 0;
+	share->AnnualStartTotalN = 0;
+	share->AnnualStartSoilOrgN = 0;
+	share->AnnualStartMineralN = 0;
+	share->AnnualStartPlantStoreN = 0;
+	share->AnnualStartVegStructN = 0;
+	share->AnnualStartDeadWoodN = 0;
+	share->FolLitN = 0;
+	share->RootLitM = 0;
+	share->RootLitN = 0;
+	share->WoodLitM = 0;
+	share->WoodLitN = 0;
 
 
 
@@ -204,6 +247,16 @@ void pnet_model::initvars(site_struct* site, veg_struct* veg, share_struct* shar
 	veg->SoilMoistFact = site->SoilMoistFact;
 	veg->NImmobA = site->NImmobA;
 	veg->NImmobB = site->NImmobB;
+
+	InitializeFUN_CORPSEBelowground(site, share);
+	share->FolN = share->FolMass * share->FolNCon / 100.0;
+	share->AnnualStartSoilOrgN = share->HON;
+	share->AnnualStartMineralN = share->NH4 + share->NO3;
+	share->AnnualStartPlantStoreN = share->PlantN + share->BudN;
+	share->AnnualStartVegStructN = share->FolN + share->WoodMassN + share->RootMassN;
+	share->AnnualStartDeadWoodN = share->DeadWoodN;
+	share->AnnualStartTotalN = share->AnnualStartSoilOrgN + share->AnnualStartMineralN
+		+ share->AnnualStartPlantStoreN + share->AnnualStartVegStructN + share->AnnualStartDeadWoodN;
 }
 
 
@@ -261,6 +314,18 @@ void pnet_model::init_out(int nyrs, out_struct* out)
 		out->grossnmin[i] = 0.0;
 		out->nplantuptake[i] = 0.0;
 		out->grossnimob[i] = 0.0;
+		out->bgnetnmin[i] = 0.0;
+		out->orggrossnmin[i] = 0.0;
+		out->rhizgrossnmin[i] = 0.0;
+		out->bulkgrossnmin[i] = 0.0;
+		out->mineralgrossnmin[i] = 0.0;
+		out->orgnetnmin_layer[i] = 0.0;
+		out->rhiznetnmin_layer[i] = 0.0;
+		out->bulknetnmin_layer[i] = 0.0;
+		out->mineralnetnmin_layer[i] = 0.0;
+		out->rootexudatec[i] = 0.0;
+		out->mycnplant[i] = 0.0;
+		out->funfixn[i] = 0.0;
 		out->littern[i] = 0.0;
 		out->netnitrif[i] = 0.0;
 		out->nratio[i] = 0.0;
@@ -270,7 +335,65 @@ void pnet_model::init_out(int nyrs, out_struct* out)
 		out->rmresp[i] = 0.0;
 		out->rgresp[i] = 0.0;
 		out->decresp[i] = 0.0;
+		out->totalsoilresp[i] = 0.0;
 		out->decwresp[i] = 0.0; //Linghui 0729
+		out->orgfastc[i] = 0.0;
+		out->orgfastn[i] = 0.0;
+		out->orgslowc[i] = 0.0;
+		out->orgslown[i] = 0.0;
+		out->orgdeadc[i] = 0.0;
+		out->orgdeadn[i] = 0.0;
+		out->rhizfastc[i] = 0.0;
+		out->rhizfastn[i] = 0.0;
+		out->rhizslowc[i] = 0.0;
+		out->rhizslown[i] = 0.0;
+		out->rhizdeadc[i] = 0.0;
+		out->rhizdeadn[i] = 0.0;
+		out->bulkfastc[i] = 0.0;
+		out->bulkfastn[i] = 0.0;
+		out->bulkslowc[i] = 0.0;
+		out->bulkslown[i] = 0.0;
+		out->bulkdeadc[i] = 0.0;
+		out->bulkdeadn[i] = 0.0;
+		out->orgmicn[i] = 0.0;
+		out->rhizmicn[i] = 0.0;
+		out->bulkmicn[i] = 0.0;
+		out->totalmicn[i] = 0.0;
+		out->orgprotn[i] = 0.0;
+		out->rhizprotn[i] = 0.0;
+		out->bulkprotn[i] = 0.0;
+		out->totalprotn[i] = 0.0;
+		out->protectionnyr[i] = 0.0;
+		out->deprotectionnyr[i] = 0.0;
+		out->funndemand[i] = 0.0;
+		out->funndemandgap[i] = 0.0;
+		out->funpotrootc[i] = 0.0;
+		out->funpotwoodc[i] = 0.0;
+		out->funnlimitrootc[i] = 0.0;
+		out->funnlimitwoodc[i] = 0.0;
+		out->funplantnoverflow[i] = 0.0;
+		out->funoverflowtonh4[i] = 0.0;
+		out->funoverflowtono3[i] = 0.0;
+		out->nstart_total[i] = 0.0;
+		out->nend_total[i] = 0.0;
+		out->dn_total[i] = 0.0;
+		out->nstart_soilorg[i] = 0.0;
+		out->nend_soilorg[i] = 0.0;
+		out->dn_soilorg[i] = 0.0;
+		out->nstart_mineral[i] = 0.0;
+		out->nend_mineral[i] = 0.0;
+		out->dn_mineral[i] = 0.0;
+		out->nstart_plantstore[i] = 0.0;
+		out->nend_plantstore[i] = 0.0;
+		out->dn_plantstore[i] = 0.0;
+		out->nstart_vegstruct[i] = 0.0;
+		out->nend_vegstruct[i] = 0.0;
+		out->dn_vegstruct[i] = 0.0;
+		out->nstart_deadwood[i] = 0.0;
+		out->nend_deadwood[i] = 0.0;
+		out->dn_deadwood[i] = 0.0;
+		out->ngas[i] = 0.0;
+		out->nbalance_resid[i] = 0.0;
 		out->folm[i] = 0.0;
 		out->deadwoodm[i] = 0.0;
 		out->woodm[i] = 0.0;
